@@ -9,9 +9,12 @@ def _metric_row(label: str, value) -> str:
     return f"<tr><td>{escape(label)}</td><td>{escape(str(value))}</td></tr>"
 
 
-def render_html(processed: dict, sections: dict, failures: list[str]) -> str:
+def render_html(
+    processed: dict, sections: dict, failures: list[str], valuation: dict | None = None
+) -> str:
     p = processed
     market = p["market"]
+    ratios = p.get("ratios", {})
 
     # 财务历史表
     rows = ""
@@ -56,7 +59,29 @@ th {{ background: #f5f7fa; }}
     if failures:
         html += '<div class="warn">Warning: ' + escape("; ".join(failures)) + "</div>"
 
+    ratio_rows = ""
+    ratio_items = [
+        ("Gross Margin", f"{ratios['gross_margin_pct']:.1f}%" if ratios.get("gross_margin_pct") is not None else "n/a"),
+        ("Net Margin", f"{ratios['net_margin_pct']:.1f}%" if ratios.get("net_margin_pct") is not None else "n/a"),
+        ("ROE", f"{ratios['roe_pct']:.1f}%" if ratios.get("roe_pct") is not None else "n/a"),
+        ("ROIC", f"{ratios['roic_pct']:.1f}%" if ratios.get("roic_pct") is not None else "n/a"),
+        ("Debt/Equity", ratios.get("debt_to_equity") if ratios.get("debt_to_equity") is not None else "n/a"),
+        ("Debt/Assets", f"{ratios['debt_to_assets_pct']:.1f}%" if ratios.get("debt_to_assets_pct") is not None else "n/a"),
+        ("Current Ratio", ratios.get("current_ratio") if ratios.get("current_ratio") is not None else "n/a"),
+        ("Interest Coverage", ratios.get("interest_coverage") if ratios.get("interest_coverage") is not None else "n/a"),
+        ("FCF Margin", f"{ratios['fcf_margin_pct']:.1f}%" if ratios.get("fcf_margin_pct") is not None else "n/a"),
+        ("Net Debt ($M)", ratios.get("net_debt") if ratios.get("net_debt") is not None else "n/a"),
+    ]
+    for label, value in ratio_items:
+        ratio_rows += _metric_row(label, value)
+
     html += f"""
+<h2>Financial Ratios</h2>
+<table>
+<tr><th>Ratio</th><th>Value</th></tr>
+{ratio_rows}
+</table>
+
 <h2>Key Metrics</h2>
 <table>
 <tr><th>Metric</th><th>Value</th></tr>
@@ -76,6 +101,55 @@ th {{ background: #f5f7fa; }}
 <tr><th>Year</th><th>Revenue</th><th>EBITDA</th><th>Net Income</th><th>EPS</th></tr>
 {rows}
 </table>
+"""
+
+    if valuation:
+        dcf = valuation.get("dcf") or {}
+        comp = valuation.get("comparable") or {}
+        rng = valuation.get("range") or {}
+        sens = valuation.get("sensitivity") or []
+
+        valuation_rows = ""
+        if dcf.get("value_per_share") is not None:
+            valuation_rows += _metric_row(
+                "DCF (WACC "
+                f"{dcf.get('wacc', 0.09) * 100:.0f}%, terminal g {dcf.get('terminal_growth', 0.025) * 100:.1f}%)",
+                f"${dcf['value_per_share']:.2f}",
+            )
+        if comp.get("value_per_share") is not None:
+            valuation_rows += _metric_row(
+                f"Comparable EV/EBITDA (median {comp.get('median_multiple', 0):.1f}x)",
+                f"${comp['value_per_share']:.2f}",
+            )
+        if rng.get("low") is not None:
+            valuation_rows += _metric_row(
+                "Combined fair value range",
+                f"${rng['low']:.2f} - ${rng['high']:.2f} (mid ${rng['mid']:.2f})",
+            )
+
+        sens_html = ""
+        if sens:
+            header = "".join(f"<th>{escape(k.replace('g=', 'g '))}</th>" for k in sens[0] if k != "wacc")
+            rows_html = ""
+            for row in sens:
+                cells = "".join(
+                    f"<td>${v:.2f}</td>" if v is not None else "<td>n/a</td>"
+                    for k, v in row.items()
+                    if k != "wacc"
+                )
+                rows_html += f"<tr><td>{escape(row['wacc'])}</td>{cells}</tr>"
+            sens_html = (
+                "<h4>DCF Sensitivity (WACC × terminal growth)</h4>"
+                f"<table><tr><th>WACC \\ g</th>{header}</tr>{rows_html}</table>"
+            )
+
+        html += f"""
+<h2>Quantitative Valuation</h2>
+<table>
+<tr><th>Method</th><th>Value per Share</th></tr>
+{valuation_rows}
+</table>
+{sens_html}
 """
 
     section_titles = {

@@ -101,8 +101,8 @@ AGENTS: list[dict] = [
 ]
 
 
-def build_data_brief(processed: dict) -> str:
-    """把处理后的指标转成所有 agent 共享的数据简报。"""
+def build_data_brief(processed: dict, valuation: dict | None = None) -> str:
+    """把处理后的指标与定量估值转成所有 agent 共享的数据简报。"""
     market = processed["market"]
     lines = [
         f"Company: {processed['company_name']} ({processed['ticker']})",
@@ -131,6 +131,39 @@ def build_data_brief(processed: dict) -> str:
         lines.append("Recent news:")
         for i, n in enumerate(processed["news"][:5], 1):
             lines.append(f"  {i}. [{n['date']}] {n['title']}: {n['summary']}")
+    if valuation:
+        lines.append("Quantitative valuation (calculated from data, not LLM-estimated):")
+        dcf = valuation.get("dcf") or {}
+        if dcf.get("value_per_share") is not None:
+            lines.append(
+                f"  DCF fair value per share: ${dcf['value_per_share']:.2f} "
+                f"(WACC {dcf.get('wacc', 0.09) * 100:.0f}%, terminal g {dcf.get('terminal_growth', 0.025) * 100:.1f}%)"
+            )
+        comp = valuation.get("comparable") or {}
+        if comp.get("value_per_share") is not None:
+            lines.append(
+                f"  Comparable EV/EBITDA valuation: ${comp['value_per_share']:.2f} "
+                f"(median peer multiple {comp.get('median_multiple', 0):.1f}x)"
+            )
+        rng = valuation.get("range") or {}
+        if rng.get("low") is not None:
+            lines.append(
+                f"  Combined fair value range: ${rng['low']:.2f} - ${rng['high']:.2f} "
+                f"(mid ${rng['mid']:.2f})"
+            )
+        sens = valuation.get("sensitivity") or []
+        if sens:
+            vals = [
+                v
+                for row in sens
+                for k, v in row.items()
+                if k != "wacc" and v is not None
+            ]
+            if vals:
+                lines.append(
+                    f"  DCF sensitivity (WACC 8-10% × terminal g 2-3%): "
+                    f"${min(vals):.2f} - ${max(vals):.2f}"
+                )
     return "\n".join(lines)
 
 

@@ -11,6 +11,7 @@ from pocketflow import AsyncParallelBatchNode
 from backend.config import project_root
 from backend.flow.agents import AGENTS, build_data_brief, call_structured
 from backend.flow.processing import process_snapshot
+from backend.flow.valuation import valuation_engine
 from backend.observability.observable import ObservableNode
 from backend.providers.mock import MockProvider
 from backend.report.html import render_html
@@ -69,7 +70,7 @@ class TextAgentBatchNode(ObservableNode, AsyncParallelBatchNode):
     """4 个分析 agent 并行执行；单个失败不影响整体，标记 fallback。"""
 
     async def prep_async(self, shared):
-        data_brief = build_data_brief(shared["processed"])
+        data_brief = build_data_brief(shared["processed"], shared.get("valuation"))
         return [
             {
                 "agent": agent,
@@ -115,6 +116,20 @@ class TextAgentBatchNode(ObservableNode, AsyncParallelBatchNode):
         return "default"
 
 
+class ValuationNode(ObservableNode):
+    """定量估值：DCF + 可比公司 + 敏感性（纯计算）。"""
+
+    async def prep_async(self, shared):
+        return shared["processed"]
+
+    async def exec_async(self, processed):
+        return valuation_engine(processed)
+
+    async def post_async(self, shared, prep_res, exec_res):
+        shared["valuation"] = exec_res
+        return "default"
+
+
 class HtmlReportNode(ObservableNode):
     """渲染 HTML 报告并落盘。"""
 
@@ -123,10 +138,16 @@ class HtmlReportNode(ObservableNode):
             "processed": shared["processed"],
             "sections": shared["text_sections"],
             "failures": shared.get("agent_failures", []),
+            "valuation": shared.get("valuation"),
         }
 
     async def exec_async(self, payload):
-        html = render_html(payload["processed"], payload["sections"], payload["failures"])
+        html = render_html(
+            payload["processed"],
+            payload["sections"],
+            payload["failures"],
+            payload["valuation"],
+        )
         artifacts = project_root() / "data" / "artifacts"
         artifacts.mkdir(parents=True, exist_ok=True)
         ticker = payload["processed"]["ticker"]

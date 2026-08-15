@@ -11,6 +11,7 @@ from backend.flow.nodes import (
     InputNode,
     MockDataNode,
     TextAgentBatchNode,
+    ValuationNode,
 )
 from backend.observability.observable import ObservableFlow
 
@@ -20,13 +21,15 @@ def build_report_flow(job_id: str, event_bus=None) -> ObservableFlow:
     input_node = InputNode(job_id=job_id, event_bus=event_bus)
     data_node = MockDataNode(job_id=job_id, event_bus=event_bus)
     process_node = DataProcessorNode(job_id=job_id, event_bus=event_bus)
+    valuation_node = ValuationNode(job_id=job_id, event_bus=event_bus)
     agents_node = TextAgentBatchNode(job_id=job_id, event_bus=event_bus)
     report_node = HtmlReportNode(job_id=job_id, event_bus=event_bus)
     done_node = DoneNode(job_id=job_id, event_bus=event_bus)
 
     input_node >> data_node
     data_node >> process_node
-    process_node >> agents_node
+    process_node >> valuation_node
+    valuation_node >> agents_node
     agents_node >> report_node
     report_node >> done_node
 

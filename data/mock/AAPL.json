@@ -6,16 +6,22 @@
   "data_source": "mock",
   "financial_data": {
     "income_statement": [
-      {"year": 2022, "revenue": 394328, "ebitda": 130541, "net_income": 99803, "eps": 6.11},
-      {"year": 2023, "revenue": 383285, "ebitda": 125822, "net_income": 96995, "eps": 6.13},
-      {"year": 2024, "revenue": 391035, "ebitda": 131381, "net_income": 93736, "eps": 6.08},
-      {"year": 2025, "revenue": 416000, "ebitda": 145000, "net_income": 108000, "eps": 7.12}
+      {"year": 2022, "revenue": 394328, "cogs": 223546, "ebitda": 130541, "net_income": 99803, "eps": 6.11, "interest_expense": 2931},
+      {"year": 2023, "revenue": 383285, "cogs": 214137, "ebitda": 125822, "net_income": 96995, "eps": 6.13, "interest_expense": 3932},
+      {"year": 2024, "revenue": 391035, "cogs": 217065, "ebitda": 131381, "net_income": 93736, "eps": 6.08, "interest_expense": 3600},
+      {"year": 2025, "revenue": 416000, "cogs": 228000, "ebitda": 145000, "net_income": 108000, "eps": 7.12, "interest_expense": 3200}
     ],
     "balance_sheet": [
-      {"year": 2025, "total_assets": 364980, "total_liabilities": 302083, "total_equity": 62897, "cash_and_equivalents": 29943}
+      {"year": 2022, "total_assets": 352755, "total_liabilities": 302083, "total_equity": 50672, "cash_and_equivalents": 23646, "current_assets": 135405, "current_liabilities": 134182, "long_term_debt": 98959, "short_term_debt": 11123},
+      {"year": 2023, "total_assets": 352583, "total_liabilities": 290437, "total_equity": 62146, "cash_and_equivalents": 29965, "current_assets": 143566, "current_liabilities": 145529, "long_term_debt": 95284, "short_term_debt": 15620},
+      {"year": 2024, "total_assets": 364980, "total_liabilities": 301079, "total_equity": 63901, "cash_and_equivalents": 26887, "current_assets": 152989, "current_liabilities": 153717, "long_term_debt": 85750, "short_term_debt": 17990},
+      {"year": 2025, "total_assets": 380000, "total_liabilities": 310000, "total_equity": 70000, "cash_and_equivalents": 30000, "current_assets": 165000, "current_liabilities": 158000, "long_term_debt": 80000, "short_term_debt": 15000}
     ],
     "cash_flow": [
-      {"year": 2025, "operating_cash_flow": 118254, "capex": 9947, "free_cash_flow": 108307}
+      {"year": 2022, "operating_cash_flow": 122151, "capex": 10708, "free_cash_flow": 111443},
+      {"year": 2023, "operating_cash_flow": 110543, "capex": 10959, "free_cash_flow": 99584},
+      {"year": 2024, "operating_cash_flow": 118254, "capex": 9447, "free_cash_flow": 108807},
+      {"year": 2025, "operating_cash_flow": 128000, "capex": 10000, "free_cash_flow": 118000}
     ]
   },
   "market_metrics": {
