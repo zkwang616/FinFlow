@@ -116,7 +116,7 @@ data/
 
 ## Acknowledgements
 
-The multi-role financial analysis workflow design was inspired by [AI4Finance-Foundation/FinRobot](https://github.com/AI4Finance-Foundation/FinRobot) (Apache-2.0). No source code is copied; see [NOTICE](NOTICE).
+The multi-role financial analysis workflow design was inspired by [AI4Finance-Foundation/FinRobot](https://github.com/AI4Finance-Foundation/FinRobot) (Apache-2.0). See [NOTICE](NOTICE).
 
 ## License
 
