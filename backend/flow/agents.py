@@ -49,6 +49,31 @@ class TakeawaysResponse(BaseModel):
     conclusion: str
 
 
+class NewsSummaryResponse(BaseModel):
+    summary: str
+    sentiment: str  # positive / negative / neutral
+    sentiment_score: float  # -1.0 ~ 1.0
+    key_headlines: list[str]
+
+
+class CompetitorAnalysisResponse(BaseModel):
+    competitive_position: str
+    main_competitors: list[str]
+    moat_assessment: str
+
+
+class CatalystAnalysisResponse(BaseModel):
+    near_term_catalysts: list[str]
+    risks_to_catalysts: list[str]
+    outlook: str
+
+
+class FinancialHealthResponse(BaseModel):
+    health_assessment: str
+    strengths: list[str]
+    concerns: list[str]
+
+
 AGENTS: list[dict] = [
     {
         "key": "company_overview",
@@ -95,6 +120,59 @@ AGENTS: list[dict] = [
             "Summarize the thesis, catalysts, and watch indicators. "
             "Return ONLY a valid JSON object matching the schema: "
             '{"investment_thesis": string, "key_catalysts": [string], "watch_indicators": [string], "conclusion": string}. '
+            "Do not include markdown fences or any text outside the JSON."
+        ),
+    },
+    {
+        "key": "news_summary",
+        "name": "News & Sentiment Analyst",
+        "response_model": NewsSummaryResponse,
+        "system_prompt": (
+            "You are a financial news analyst. Summarize the recent news, judge the overall "
+            "market sentiment (positive/negative/neutral), and give a sentiment score from -1.0 "
+            "(very negative) to 1.0 (very positive). "
+            "Return ONLY a valid JSON object matching the schema: "
+            '{"summary": string, "sentiment": string, "sentiment_score": number, '
+            '"key_headlines": [string]}. '
+            "Do not include markdown fences or any text outside the JSON."
+        ),
+    },
+    {
+        "key": "competitor_analysis",
+        "name": "Competitor Analyst",
+        "response_model": CompetitorAnalysisResponse,
+        "system_prompt": (
+            "You are a competitive strategy analyst. Assess the company's competitive position "
+            "against its peers using the peer valuation data and financial metrics provided. "
+            "Return ONLY a valid JSON object matching the schema: "
+            '{"competitive_position": string, "main_competitors": [string], '
+            '"moat_assessment": string}. '
+            "Do not include markdown fences or any text outside the JSON."
+        ),
+    },
+    {
+        "key": "catalyst_analysis",
+        "name": "Catalyst Analyst",
+        "response_model": CatalystAnalysisResponse,
+        "system_prompt": (
+            "You are a catalysts analyst. Identify near-term catalysts for the stock based on "
+            "the recent news and revenue forecast, and the risks that could derail them. "
+            "Return ONLY a valid JSON object matching the schema: "
+            '{"near_term_catalysts": [string], "risks_to_catalysts": [string], '
+            '"outlook": string}. '
+            "Do not include markdown fences or any text outside the JSON."
+        ),
+    },
+    {
+        "key": "financial_health",
+        "name": "Financial Health Analyst",
+        "response_model": FinancialHealthResponse,
+        "system_prompt": (
+            "You are a financial health analyst. Assess the company's financial strength using "
+            "the calculated ratios provided (ROE, ROIC, margins, leverage, liquidity, interest "
+            "coverage, FCF margin). "
+            "Return ONLY a valid JSON object matching the schema: "
+            '{"health_assessment": string, "strengths": [string], "concerns": [string]}. '
             "Do not include markdown fences or any text outside the JSON."
         ),
     },

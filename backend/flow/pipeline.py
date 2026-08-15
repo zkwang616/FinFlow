@@ -10,6 +10,7 @@ from backend.flow.nodes import (
     HtmlReportNode,
     InputNode,
     MockDataNode,
+    PdfReportNode,
     TextAgentBatchNode,
     ValuationNode,
 )
@@ -24,6 +25,7 @@ def build_report_flow(job_id: str, event_bus=None) -> ObservableFlow:
     valuation_node = ValuationNode(job_id=job_id, event_bus=event_bus)
     agents_node = TextAgentBatchNode(job_id=job_id, event_bus=event_bus)
     report_node = HtmlReportNode(job_id=job_id, event_bus=event_bus)
+    pdf_node = PdfReportNode(job_id=job_id, event_bus=event_bus)
     done_node = DoneNode(job_id=job_id, event_bus=event_bus)
 
     input_node >> data_node
@@ -31,7 +33,8 @@ def build_report_flow(job_id: str, event_bus=None) -> ObservableFlow:
     process_node >> valuation_node
     valuation_node >> agents_node
     agents_node >> report_node
-    report_node >> done_node
+    report_node >> pdf_node
+    pdf_node >> done_node
 
     return ObservableFlow(start=input_node, job_id=job_id, event_bus=event_bus)
 

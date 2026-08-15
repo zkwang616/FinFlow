@@ -67,9 +67,16 @@ def compute_ratios(income: list[dict], balance: list[dict], cashflow: list[dict]
 
 def process_snapshot(snapshot: dict) -> dict:
     """从 mock 快照计算历史指标、增长率与简易预测。"""
-    income = snapshot["financial_data"]["income_statement"]
-    balance = snapshot["financial_data"].get("balance_sheet", [])
-    cashflow = snapshot["financial_data"].get("cash_flow", [])
+    # 统一按年份升序（兼容 yfinance 的降序返回）
+    income = sorted(
+        snapshot["financial_data"]["income_statement"], key=lambda r: r["year"]
+    )
+    balance = sorted(
+        snapshot["financial_data"].get("balance_sheet", []), key=lambda r: r["year"]
+    )
+    cashflow = sorted(
+        snapshot["financial_data"].get("cash_flow", []), key=lambda r: r["year"]
+    )
     years = [r["year"] for r in income]
     revenue = [r["revenue"] for r in income]
     ebitda = [r["ebitda"] for r in income]
@@ -99,6 +106,7 @@ def process_snapshot(snapshot: dict) -> dict:
         "company_name": snapshot.get("company_name", ""),
         "ticker": snapshot.get("ticker", ""),
         "as_of": snapshot.get("as_of", ""),
+        "data_source": snapshot.get("data_source", "mock"),
         "years": years,
         "revenue": revenue,
         "ebitda": ebitda,

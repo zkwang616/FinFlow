@@ -9,8 +9,25 @@ def _metric_row(label: str, value) -> str:
     return f"<tr><td>{escape(label)}</td><td>{escape(str(value))}</td></tr>"
 
 
+MAIN_FIELDS = {
+    "overview",
+    "health_assessment",
+    "valuation_assessment",
+    "competitive_position",
+    "summary",
+    "outlook",
+    "risk_mitigation",
+    "investment_thesis",
+    "conclusion",
+}
+
+
 def render_html(
-    processed: dict, sections: dict, failures: list[str], valuation: dict | None = None
+    processed: dict,
+    sections: dict,
+    failures: list[str],
+    valuation: dict | None = None,
+    charts: dict | None = None,
 ) -> str:
     p = processed
     market = p["market"]
@@ -27,11 +44,11 @@ def render_html(
 
     def section(title: str, body: str, content: dict) -> str:
         lists = ""
-        for field in ("key_strengths", "key_challenges", "risks", "key_catalysts", "watch_indicators"):
-            items = content.get(field)
-            if items:
-                lis = "".join(f"<li>{escape(str(i))}</li>" for i in items)
-                lists += f"<h4>{field.replace('_', ' ').title()}</h4><ul>{lis}</ul>"
+        for field, items in content.items():
+            if field in MAIN_FIELDS or not isinstance(items, list) or not items:
+                continue
+            lis = "".join(f"<li>{escape(str(i))}</li>" for i in items)
+            lists += f"<h4>{field.replace('_', ' ').title()}</h4><ul>{lis}</ul>"
         return f"<section><h2>{escape(title)}</h2><p>{escape(body)}</p>{lists}</section>"
 
     html = f"""<!DOCTYPE html>
@@ -53,7 +70,7 @@ th {{ background: #f5f7fa; }}
 </head>
 <body>
 <h1>{escape(p['company_name'])} ({escape(p['ticker'])})</h1>
-<p class="meta">Data as of {escape(p['as_of'])} · Latest fiscal year {p['latest_year']} · Source: {escape(p.get('as_of', '')) and 'mock'}</p>
+<p class="meta">Data as of {escape(p['as_of'])} · Latest fiscal year {p['latest_year']} · Source: {escape(p.get('data_source', 'mock'))}</p>
 """
 
     if failures:
@@ -102,6 +119,23 @@ th {{ background: #f5f7fa; }}
 {rows}
 </table>
 """
+
+    if charts:
+        chart_html = ""
+        for key, label in (
+            ("financial_trend", "Financial Trend"),
+            ("peer_ev_ebitda", "EV/EBITDA vs Peers"),
+            ("price_history", "Price History"),
+        ):
+            b64 = charts.get(key)
+            if b64:
+                chart_html += (
+                    f"<h4>{escape(label)}</h4>"
+                    f'<img src="data:image/png;base64,{b64}" alt="{escape(label)}" '
+                    'style="max-width:100%;border:1px solid #e2e8f0;border-radius:8px;"/>'
+                )
+        if chart_html:
+            html += f'<h2>Charts</h2>{chart_html}'
 
     if valuation:
         dcf = valuation.get("dcf") or {}
@@ -154,7 +188,11 @@ th {{ background: #f5f7fa; }}
 
     section_titles = {
         "company_overview": "Company Overview",
+        "financial_health": "Financial Health",
         "valuation_analysis": "Valuation Analysis",
+        "competitor_analysis": "Competitor Analysis",
+        "news_summary": "News & Sentiment",
+        "catalyst_analysis": "Catalyst Analysis",
         "risks": "Risk Analysis",
         "takeaways": "Investment Takeaways",
     }
@@ -163,8 +201,22 @@ th {{ background: #f5f7fa; }}
             content = sections[key]
             if key == "company_overview":
                 body = content.get("overview", "")
+            elif key == "financial_health":
+                body = content.get("health_assessment", "")
             elif key == "valuation_analysis":
                 body = content.get("valuation_assessment", "")
+            elif key == "competitor_analysis":
+                body = content.get("competitive_position", "")
+            elif key == "news_summary":
+                body = content.get("summary", "")
+                if content.get("sentiment"):
+                    score = content.get("sentiment_score")
+                    body += (
+                        f"\n\nOverall sentiment: {content['sentiment']}"
+                        + (f" (score {score})" if score is not None else "")
+                    )
+            elif key == "catalyst_analysis":
+                body = content.get("outlook", "")
             elif key == "risks":
                 body = f"Risk rating: {content.get('risk_rating', 'n/a')}. {content.get('risk_mitigation', '')}"
             elif key == "takeaways":

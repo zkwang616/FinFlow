@@ -6,7 +6,9 @@ FinFlow is built on [PocketFlow](https://github.com/The-Pocket/PocketFlow), a 10
 
 ## Features
 
-- **Multi-role stock analysis** — 4 parallel analysis agents (company overview, valuation, risks, investment takeaways) produce a structured report from one ticker
+- **Multi-role stock analysis** — 8 parallel analysis agents (overview, financial health, valuation, competitors, news/sentiment, catalysts, risks, takeaways) produce a structured report from one ticker
+- **Quantitative engine** — financial ratios, DCF & comparable valuation, and sensitivity analysis are computed from data (not LLM-generated), then fed to the analysis agents as ground truth
+- **Charts & PDF** — trend / peer / price charts embedded in the report, plus a PDF export
 - **Lightweight core** — built on PocketFlow (a ~100-line LLM framework), with minimal dependencies (`fastapi`, `openai`, `pandas`)
 - **Auditable execution** — every run produces a `trace.json` alongside the report, recording each step's inputs, outputs, timing, actions, and errors
 - **Full-stack console** — FastAPI + WebSocket backend, React frontend with a live pipeline status view and report preview
@@ -61,8 +63,11 @@ Copy `.env.example` to `.env` and set `DEEPSEEK_API_KEY`.
 ### CLI
 
 ```powershell
-# Generate a report for a ticker
+# Generate a report for a ticker (mock data, offline)
 .venv\Scripts\python.exe -m backend.cli --ticker AAPL
+
+# Real market data via yfinance (network / proxy may be required)
+.venv\Scripts\python.exe -m backend.cli --ticker AAPL --mode real
 
 # Repeat N times without cache (consistency experiments)
 .venv\Scripts\python.exe -m backend.cli --ticker AAPL --repeat 5 --no-cache
@@ -88,7 +93,7 @@ backend/
   observability/  event bus, observable nodes, WebSocket broadcast
                   and trace audit document generation
   providers/      data source abstraction (mock)
-  report/         HTML report rendering
+  report/         HTML/PDF report rendering, charts
   storage/        SQLite (jobs / events)
   experiments/    research experiments (consistency study)
   tests/          end-to-end tests
@@ -113,7 +118,7 @@ data/
 ## Roadmap
 
 - [x] V1: multi-role analysis pipeline, audit trace, caching, failure paths, consistency study
-- [ ] V2: analysis depth — valuation engine (DCF / comparable), financial ratios, sensitivity analysis, core charts, full 8-agent suite, news/sentiment, PDF, real data sources
+- [x] V2: analysis depth — valuation engine (DCF / comparable), financial ratios, sensitivity analysis, core charts, full 8-agent suite, news/sentiment, PDF export, yfinance real data source
 - [ ] V3: memory layer (Mem0), multi-job comparison, more markets
 
 ## Acknowledgements

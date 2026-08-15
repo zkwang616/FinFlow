@@ -14,7 +14,10 @@ from backend.flow.processing import process_snapshot
 from backend.flow.valuation import valuation_engine
 from backend.observability.observable import ObservableNode
 from backend.providers.mock import MockProvider
+from backend.providers.yfinance_provider import YFinanceProvider
+from backend.report.charts import generate_all
 from backend.report.html import render_html
+from backend.report.pdf import build_pdf
 
 
 class InputNode(ObservableNode):
@@ -39,12 +42,15 @@ class InputNode(ObservableNode):
 
 
 class MockDataNode(ObservableNode):
-    """从内置示例数据读取分析快照。"""
+    """数据获取节点：mode=mock 用内置示例，mode=real 用 yfinance。"""
 
     async def prep_async(self, shared):
-        return shared["ticker"]
+        return shared["ticker"], shared["mode"]
 
-    async def exec_async(self, ticker):
+    async def exec_async(self, params):
+        ticker, mode = params
+        if mode == "real":
+            return YFinanceProvider().get_snapshot(ticker)
         return MockProvider().get_snapshot(ticker)
 
     async def post_async(self, shared, prep_res, exec_res):
@@ -139,14 +145,17 @@ class HtmlReportNode(ObservableNode):
             "sections": shared["text_sections"],
             "failures": shared.get("agent_failures", []),
             "valuation": shared.get("valuation"),
+            "snapshot": shared["snapshot"],
         }
 
     async def exec_async(self, payload):
+        charts = generate_all(payload["processed"], payload["snapshot"])
         html = render_html(
             payload["processed"],
             payload["sections"],
             payload["failures"],
             payload["valuation"],
+            charts,
         )
         artifacts = project_root() / "data" / "artifacts"
         artifacts.mkdir(parents=True, exist_ok=True)
@@ -158,6 +167,32 @@ class HtmlReportNode(ObservableNode):
 
     async def post_async(self, shared, prep_res, exec_res):
         shared["report"] = exec_res
+        return "default"
+
+
+class PdfReportNode(ObservableNode):
+    """把分析结果导出为 PDF。"""
+
+    async def prep_async(self, shared):
+        return {
+            "processed": shared["processed"],
+            "sections": shared["text_sections"],
+            "valuation": shared.get("valuation"),
+            "html_path": shared["report"]["path"],
+        }
+
+    async def exec_async(self, payload):
+        pdf_path = Path(payload["html_path"]).with_suffix(".pdf")
+        build_pdf(
+            payload["processed"],
+            payload["sections"],
+            payload["valuation"],
+            pdf_path,
+        )
+        return {"pdf_path": str(pdf_path)}
+
+    async def post_async(self, shared, prep_res, exec_res):
+        shared["pdf"] = exec_res
         return "default"
 
 

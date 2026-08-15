@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
+from pathlib import Path
 
 router = APIRouter()
 
@@ -40,3 +41,14 @@ async def get_report(job_id: str, request: Request):
     if job is None or not job.get("report_path"):
         return JSONResponse({"error": "report not ready"}, status_code=404)
     return FileResponse(job["report_path"], media_type="text/html")
+
+
+@router.get("/api/jobs/{job_id}/report.pdf")
+async def get_report_pdf(job_id: str, request: Request):
+    job = request.app.state.manager.db.get_job(job_id)
+    if job is None or not job.get("report_path"):
+        return JSONResponse({"error": "report not ready"}, status_code=404)
+    pdf_path = Path(job["report_path"]).with_suffix(".pdf")
+    if not pdf_path.exists():
+        return JSONResponse({"error": "pdf not generated"}, status_code=404)
+    return FileResponse(pdf_path, media_type="application/pdf")
