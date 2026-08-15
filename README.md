@@ -1,114 +1,123 @@
 # FinFlow
 
-**可观测的 LLM 金融分析流水线**：输入一个股票代码，系统自动完成数据准备、多角色分析、报告生成，全程执行过程实时可视、可审计、可复现。
+An observable LLM-powered financial analysis pipeline. Enter a ticker and watch the full pipeline execute in real time — data fetching, multi-role LLM analysis, and report generation — with every node's state, inputs, outputs, and failures tracked and replayable.
 
-FinFlow 是一个原创项目：基于极简 LLM 框架 PocketFlow 从零构建，不依赖任何重量级 agent 框架。它把"执行过程"变成一等公民——每个节点的状态、输入输出、耗时与失败都被记录、可回放，使 LLM 分析结论可溯源。
+FinFlow is built on [PocketFlow](https://github.com/The-Pocket/PocketFlow), a 100-line minimalist LLM framework, and adds a self-built observability layer so that every conclusion in a generated report can be traced back to its data and the analysis step that produced it.
 
-## 核心特点
+## Features
 
-- **轻量**：执行内核基于 PocketFlow（百行级框架），依赖极少（fastapi + openai + pandas）
-- **可观测**：自研可观测层——每个节点执行生命周期实时广播事件（WebSocket），落库 SQLite
-- **可审计**：报告章节关联数据来源与生成节点，执行过程可回放（V2 完善章节级溯源）
-- **可复现**：mock 数据模式 + LLM 结果缓存 + CLI 批量重复实验，离线可完整演示
-- **全栈**：FastAPI + WebSocket 后端，React + React Flow 前端控制台
+- **Lightweight core** — built on PocketFlow (a ~100-line LLM framework), with minimal dependencies (`fastapi`, `openai`, `pandas`)
+- **Observable execution** — a custom observability layer broadcasts every node lifecycle event (start / ready / output / finish / fail) over WebSocket and persists it to SQLite
+- **Full-stack console** — FastAPI + WebSocket backend, React + React Flow frontend with a live DAG view, event log, and per-node I/O inspection
+- **Reproducible** — mock data mode, LLM result caching, and CLI experiments with repeatable sampling
+- **Research-ready** — the pipeline doubles as an experiment platform for studying LLM output reliability (see [Research](#research))
 
-## 研究
+## Research
 
-FinFlow 不只是工程 demo，它还用作 LLM 金融分析可靠性研究的实验平台：
+FinFlow is also an experiment platform for studying the reliability of LLM-generated financial analysis.
 
-- [结论一致性研究报告](docs/research/consistency_report.md)：相同输入下重复 10 次，事实性信息相对稳定，但风险、估值区间、投资结论方向存在显著随机性；且 `temperature=0` 贪心解码下结论方向依然 50/50 摇摆
-- 实验数据与脚本：`backend/experiments/` + `data/experiments/`（可复现）
+[**Consistency of LLM Financial Analysis: Facts Are Stable, Judgments Are Random**](docs/research/consistency_report.md)
 
-## 快速开始
+Key findings from 10 repeated runs with identical input (DeepSeek, `temperature=0.3`):
 
-### 一键演示
+- Overall text similarity between runs: **0.45** (n-gram Jaccard) — wording varies substantially
+- Judgment outputs are highly unstable: risk list overlap **0.37**, fair-value-range IoU **0.30**
+- Investment conclusion direction flips between *positive* and *neutral* **50/50** (entropy 1.0)
+- With `temperature=0` (greedy decoding), conclusion direction remains **50/50** — the instability is not sampling noise but the model itself
+
+Raw experiment data and scripts: `backend/experiments/` and `data/experiments/`.
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.12
+- Node.js 20+ / npm
+- A [DeepSeek](https://platform.deepseek.com/) API key (OpenAI-compatible)
+
+### Quick Start (one command)
 
 ```powershell
-cd C:\Users\LENOVO\Documents\量化\FinFlow
+cd FinFlow
 .venv\Scripts\python.exe demo.py
 ```
 
-然后浏览器打开 http://localhost:5173 ，输入 `AAPL` 或 `MSFT` 生成分析报告。
+Then open http://localhost:5173 and submit `AAPL` or `MSFT` (mock data included).
 
-### 手动启动
+### Manual Setup
 
 ```powershell
-# 1. 后端 API（127.0.0.1:8000）
+# Backend (127.0.0.1:8000)
 .venv\Scripts\python.exe -m uvicorn backend.app.main:app --port 8000
 
-# 2. 前端控制台（localhost:5173）
+# Frontend (localhost:5173)
 cd frontend
 npm run dev
 ```
 
-### 命令行生成报告
+Copy `.env.example` to `.env` and set `DEEPSEEK_API_KEY`.
+
+### CLI
 
 ```powershell
+# Generate a report for a ticker
 .venv\Scripts\python.exe -m backend.cli --ticker AAPL
-# 同一 ticker 重复跑 N 次（结论一致性实验，绕过缓存取独立样本）
+
+# Repeat N times without cache (consistency experiments)
 .venv\Scripts\python.exe -m backend.cli --ticker AAPL --repeat 5 --no-cache
 ```
 
-## 环境要求
-
-- Python 3.12（项目内 `.venv` 虚拟环境，已配置）
-- Node.js 20+ / npm（前端）
-- DeepSeek API key：复制 `.env.example` 为 `.env` 并填入 `DEEPSEEK_API_KEY`
-
-## 架构
+## Architecture
 
 ```
-React 前端控制台（DAG 实时可视化）
+React console (live DAG visualization)
         │ REST + WebSocket
-FastAPI（JobManager 任务状态机 + EventBus）
+FastAPI (JobManager + EventBus)
         │
-PocketFlow AsyncFlow（ObservableNode 包装）
-  Input → MockData → DataProcessor → TextAgents(×4 并行) → HtmlReport → Done
+PocketFlow AsyncFlow (ObservableNode wrapping)
+  Input → MockData → DataProcessor → TextAgents (×4 parallel) → HtmlReport → Done
 ```
 
-## 目录结构
+## Project Structure
 
 ```
 backend/
-  app/            FastAPI 路由、JobManager
-  flow/           节点、agent、流水线组装（PocketFlow）
-  observability/  事件总线、可观测节点、WebSocket 广播
-  providers/      数据源抽象（mock）
-  report/         HTML 报告渲染
-  storage/        SQLite（jobs / events）
-  tests/          端到端测试
-frontend/         React + Vite + React Flow 控制台
+  app/            FastAPI routes, JobManager
+  flow/           nodes, agents, pipeline assembly (PocketFlow)
+  observability/  event bus, observable nodes, WebSocket broadcast
+  providers/      data source abstraction (mock)
+  report/         HTML report rendering
+  storage/        SQLite (jobs / events)
+  experiments/    research experiments (consistency study)
+  tests/          end-to-end tests
+frontend/         React + Vite + React Flow console
 data/
-  mock/           内置示例数据（AAPL / MSFT）
-  cache/          LLM 结果缓存
-  artifacts/      生成的报告
+  mock/           built-in sample data (AAPL / MSFT)
+  cache/          LLM result cache
+  artifacts/      generated reports
+  experiments/    experiment raw data
 ```
 
-## API 一览
+## API
 
-| 方法 | 路径 | 说明 |
+| Method | Path | Description |
 |---|---|---|
-| POST | `/api/jobs` | 创建分析任务 `{ticker, mode}` |
-| GET | `/api/jobs/{id}` | 任务状态 |
-| GET | `/api/jobs/{id}/events` | 全量事件（回放/审计） |
-| WS | `/ws/jobs/{id}` | 实时事件流 |
-| GET | `/api/jobs/{id}/report` | HTML 报告 |
+| POST | `/api/jobs` | Create an analysis job `{ticker, mode}` |
+| GET | `/api/jobs/{id}` | Job status |
+| GET | `/api/jobs/{id}/events` | Full event history (replay / audit) |
+| WS | `/ws/jobs/{id}` | Real-time event stream |
+| GET | `/api/jobs/{id}/report` | Generated HTML report |
 
-## 里程碑
+## Roadmap
 
-- [x] M0 项目骨架
-- [x] M1 后端流水线（PocketFlow 节点化 + 4 个分析 agent + DeepSeek）
-- [x] M2 可观测层（事件总线 + SQLite + WebSocket）
-- [x] M3 前端可视化控制台
-- [x] M4 缓存、失败路径、一键演示、README
-- [ ] V2：补齐 agent、图表、PDF、真实数据源、回放、章节溯源
-- [ ] V3：记忆层（Mem0）、多任务对比、扩展市场
+- [x] V1: pipeline, observability layer, console, caching, failure paths, consistency study
+- [ ] V2: full agent suite, charts, PDF export, real data sources, replay, section-level tracing
+- [ ] V3: memory layer (Mem0), multi-job comparison, more markets
 
-## 文档
+## Acknowledgements
 
-- [设计方案](docs/DESIGN.md)
-- [结论一致性研究报告](docs/research/consistency_report.md)
+The multi-role financial analysis workflow design was inspired by [AI4Finance-Foundation/FinRobot](https://github.com/AI4Finance-Foundation/FinRobot) (Apache-2.0). No source code is copied; see [NOTICE](NOTICE).
 
-## 合规说明
+## License
 
-FinFlow 为原创项目。多角色金融分析流程设计受 AI4Finance-Foundation/FinRobot（Apache-2.0）启发，未复制其源码，详见 [NOTICE](NOTICE)。
+[MIT](LICENSE)
