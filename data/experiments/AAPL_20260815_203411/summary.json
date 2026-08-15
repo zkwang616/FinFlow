@@ -1,0 +1,45 @@
+{
+  "per_agent": {
+    "company_overview": {
+      "text_similarity": 0.8368,
+      "key_strengths_overlap": 0.63,
+      "key_challenges_overlap": 0.4533
+    },
+    "valuation_analysis": {
+      "text_similarity": 0.6513,
+      "fair_value_range_iou": 0.4769,
+      "fair_value_range_parsed": 10
+    },
+    "risks": {
+      "text_similarity": 0.4077,
+      "risks_overlap": 0.5778,
+      "risk_rating_distribution": {
+        "Moderate": 10
+      },
+      "risk_rating_entropy": -0.0
+    },
+    "takeaways": {
+      "text_similarity": 0.8611,
+      "key_catalysts_overlap": 1.0,
+      "watch_indicators_overlap": 0.8111,
+      "conclusion_direction_distribution": {
+        "neutral": 5,
+        "positive": 5
+      },
+      "conclusion_direction_entropy": 1.0
+    }
+  },
+  "overall": {
+    "mean_text_similarity": 0.6892
+  },
+  "meta": {
+    "ticker": "AAPL",
+    "runs": 10,
+    "temperature": 0.0,
+    "model": "deepseek-chat",
+    "no_cache": true,
+    "total_failures": 0,
+    "raw_data": "C:\\Users\\LENOVO\\Documents\\量化\\FinFlow\\data\\experiments\\AAPL_20260815_203411\\runs.jsonl",
+    "elapsed_s": 53.2
+  }
+}

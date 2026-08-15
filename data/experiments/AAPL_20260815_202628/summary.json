@@ -1,0 +1,40 @@
+{
+  "per_agent": {
+    "company_overview": {
+      "text_similarity": 0.5444,
+      "key_strengths_overlap": 0.6756,
+      "key_challenges_overlap": 0.3922
+    },
+    "valuation_analysis": {
+      "text_similarity": 0.4189,
+      "fair_value_range_iou": 0.2968,
+      "fair_value_range_parsed": 10
+    },
+    "risks": {
+      "text_similarity": 0.4043,
+      "risks_overlap": 0.3733,
+      "risk_rating_distribution": {
+        "Moderate": 10
+      },
+      "risk_rating_entropy": -0.0
+    },
+    "takeaways": {
+      "text_similarity": 0.4283,
+      "key_catalysts_overlap": 0.7111,
+      "watch_indicators_overlap": 0.3504,
+      "conclusion_direction_distribution": {
+        "positive": 5,
+        "neutral": 5
+      },
+      "conclusion_direction_entropy": 1.0
+    }
+  },
+  "overall": {
+    "mean_text_similarity": 0.449
+  },
+  "meta": {
+    "raw_data": "C:\\Users\\LENOVO\\Documents\\量化\\FinFlow\\data\\experiments\\AAPL_20260815_202628\\runs.jsonl",
+    "runs": 10,
+    "recomputed": true
+  }
+}

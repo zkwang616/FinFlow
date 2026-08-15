@@ -1,0 +1,54 @@
+{
+  "ticker": "AAPL",
+  "company_name": "Apple Inc.",
+  "as_of": "2026-08-14",
+  "currency": "USD",
+  "data_source": "mock",
+  "financial_data": {
+    "income_statement": [
+      {"year": 2022, "revenue": 394328, "ebitda": 130541, "net_income": 99803, "eps": 6.11},
+      {"year": 2023, "revenue": 383285, "ebitda": 125822, "net_income": 96995, "eps": 6.13},
+      {"year": 2024, "revenue": 391035, "ebitda": 131381, "net_income": 93736, "eps": 6.08},
+      {"year": 2025, "revenue": 416000, "ebitda": 145000, "net_income": 108000, "eps": 7.12}
+    ],
+    "balance_sheet": [
+      {"year": 2025, "total_assets": 364980, "total_liabilities": 302083, "total_equity": 62897, "cash_and_equivalents": 29943}
+    ],
+    "cash_flow": [
+      {"year": 2025, "operating_cash_flow": 118254, "capex": 9947, "free_cash_flow": 108307}
+    ]
+  },
+  "market_metrics": {
+    "price": 224.53,
+    "market_cap_bn": 3417,
+    "target_price": 245.0,
+    "analyst_rating": "Buy",
+    "pe_ratio": 33.5,
+    "ev_ebitda": 24.8
+  },
+  "peer_data": {
+    "peers": ["MSFT", "GOOGL", "NVDA"],
+    "peer_ev_ebitda": [
+      {"ticker": "MSFT", "ev_ebitda": 26.4},
+      {"ticker": "GOOGL", "ev_ebitda": 18.9},
+      {"ticker": "NVDA", "ev_ebitda": 42.1}
+    ]
+  },
+  "news": [
+    {
+      "title": "Apple announces AI-powered iPhone features at WWDC",
+      "date": "2026-06-10",
+      "summary": "New on-device AI capabilities expected to drive upgrade cycle in fiscal 2027."
+    },
+    {
+      "title": "Apple services revenue reaches record high",
+      "date": "2026-07-30",
+      "summary": "Services segment grew 14% YoY, now accounting for over a quarter of total revenue."
+    },
+    {
+      "title": "Analysts lift Apple price targets ahead of earnings",
+      "date": "2026-08-05",
+      "summary": "Consensus target raised to $245 on strong iPhone demand and margin outlook."
+    }
+  ]
+}

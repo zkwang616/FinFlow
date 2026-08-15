@@ -1,0 +1,49 @@
+{
+  "ticker": "MSFT",
+  "company_name": "Microsoft Corporation",
+  "as_of": "2026-08-14",
+  "currency": "USD",
+  "data_source": "mock",
+  "financial_data": {
+    "income_statement": [
+      {"year": 2022, "revenue": 198270, "ebitda": 104535, "net_income": 72738, "eps": 9.65},
+      {"year": 2023, "revenue": 211915, "ebitda": 113498, "net_income": 72361, "eps": 9.68},
+      {"year": 2024, "revenue": 245122, "ebitda": 133782, "net_income": 88136, "eps": 11.80},
+      {"year": 2025, "revenue": 281000, "ebitda": 158000, "net_income": 102000, "eps": 13.70}
+    ],
+    "balance_sheet": [
+      {"year": 2025, "total_assets": 512163, "total_liabilities": 282111, "total_equity": 230052, "cash_and_equivalents": 18411}
+    ],
+    "cash_flow": [
+      {"year": 2025, "operating_cash_flow": 118500, "capex": 44479, "free_cash_flow": 74021}
+    ]
+  },
+  "market_metrics": {
+    "price": 428.10,
+    "market_cap_bn": 3182,
+    "target_price": 470.0,
+    "analyst_rating": "Buy",
+    "pe_ratio": 31.2,
+    "ev_ebitda": 26.4
+  },
+  "peer_data": {
+    "peers": ["AAPL", "GOOGL", "AMZN"],
+    "peer_ev_ebitda": [
+      {"ticker": "AAPL", "ev_ebitda": 24.8},
+      {"ticker": "GOOGL", "ev_ebitda": 18.9},
+      {"ticker": "AMZN", "ev_ebitda": 20.3}
+    ]
+  },
+  "news": [
+    {
+      "title": "Microsoft Azure growth accelerates on AI demand",
+      "date": "2026-07-28",
+      "summary": "Azure revenue grew 33% YoY, with AI services contributing 12 points of growth."
+    },
+    {
+      "title": "Microsoft announces Copilot expansion to enterprise customers",
+      "date": "2026-08-03",
+      "summary": "New Copilot tiers expected to lift commercial cloud margins."
+    }
+  ]
+}
