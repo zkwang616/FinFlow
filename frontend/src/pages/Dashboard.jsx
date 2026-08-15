@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import DagCanvas from "../components/DagCanvas.jsx";
 import EventLog from "../components/EventLog.jsx";
-import NodeDetails from "../components/NodeDetails.jsx";
 import { wsUrl } from "../api.js";
 
 export default function Dashboard({ jobId, onBack, onReport }) {
   const [nodeStates, setNodeStates] = useState({});
   const [events, setEvents] = useState([]);
-  const [selected, setSelected] = useState(null);
   const [done, setDone] = useState(false);
   const [reportPath, setReportPath] = useState(null);
   const [connState, setConnState] = useState("connecting");
@@ -82,13 +80,11 @@ export default function Dashboard({ jobId, onBack, onReport }) {
       </header>
       <main className="workspace">
         <section className="panel-left">
-          <DagCanvas nodeStates={nodeStates} selected={selected} onSelect={setSelected} />
+          <DagCanvas nodeStates={nodeStates} />
         </section>
         <aside className="panel-right">
           <h3>事件日志</h3>
           <EventLog events={events} />
-          <h3>节点详情</h3>
-          <NodeDetails nodeStates={nodeStates} selected={selected} />
         </aside>
       </main>
     </div>

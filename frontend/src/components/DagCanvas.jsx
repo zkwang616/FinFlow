@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { ReactFlow, Background, Controls, MarkerType } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -19,7 +19,7 @@ const STATUS_COLOR = {
   warning: "#d97706",
 };
 
-export default function DagCanvas({ nodeStates, selected, onSelect }) {
+export default function DagCanvas({ nodeStates }) {
   const nodes = useMemo(
     () =>
       NODE_LAYOUT.map(({ id, label, y }) => {
@@ -54,17 +54,11 @@ export default function DagCanvas({ nodeStates, selected, onSelect }) {
     []
   );
 
-  const onNodeClick = useCallback(
-    (_, node) => onSelect(node.id),
-    [onSelect]
-  );
-
   return (
     <div className="dag-canvas">
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodeClick={onNodeClick}
         fitView
         nodesDraggable={false}
         proOptions={{ hideAttribution: true }}
@@ -72,7 +66,6 @@ export default function DagCanvas({ nodeStates, selected, onSelect }) {
         <Background />
         <Controls />
       </ReactFlow>
-      {selected && <div className="legend">点击节点查看详情（右侧）</div>}
     </div>
   );
 }

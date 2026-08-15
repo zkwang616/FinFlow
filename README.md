@@ -1,14 +1,15 @@
 # FinFlow
 
-An observable LLM-powered financial analysis pipeline. Enter a ticker and watch the full pipeline execute in real time — data fetching, multi-role LLM analysis, and report generation — with every node's state, inputs, outputs, and failures tracked and replayable.
+An LLM-powered stock analysis platform. Enter a ticker and FinFlow prepares the data, runs multi-role LLM analysis (company overview, valuation, risks, investment takeaways), and generates a structured analysis report. Every analysis run also produces an execution trace document, so each conclusion can be audited and reproduced.
 
-FinFlow is built on [PocketFlow](https://github.com/The-Pocket/PocketFlow), a 100-line minimalist LLM framework, and adds a self-built observability layer so that every conclusion in a generated report can be traced back to its data and the analysis step that produced it.
+FinFlow is built on [PocketFlow](https://github.com/The-Pocket/PocketFlow), a 100-line minimalist LLM framework, and adds a lightweight observability layer that records how each analysis conclusion was produced.
 
 ## Features
 
+- **Multi-role stock analysis** — 4 parallel analysis agents (company overview, valuation, risks, investment takeaways) produce a structured report from one ticker
 - **Lightweight core** — built on PocketFlow (a ~100-line LLM framework), with minimal dependencies (`fastapi`, `openai`, `pandas`)
-- **Observable execution** — a custom observability layer broadcasts every node lifecycle event (start / ready / output / finish / fail) over WebSocket and persists it to SQLite
-- **Full-stack console** — FastAPI + WebSocket backend, React + React Flow frontend with a live DAG view, event log, and per-node I/O inspection
+- **Auditable execution** — every run produces a `trace.json` alongside the report, recording each step's inputs, outputs, timing, actions, and errors
+- **Full-stack console** — FastAPI + WebSocket backend, React frontend with a live pipeline status view and report preview
 - **Reproducible** — mock data mode, LLM result caching, and CLI experiments with repeatable sampling
 - **Research-ready** — the pipeline doubles as an experiment platform for studying LLM output reliability (see [Research](#research))
 
@@ -85,6 +86,7 @@ backend/
   app/            FastAPI routes, JobManager
   flow/           nodes, agents, pipeline assembly (PocketFlow)
   observability/  event bus, observable nodes, WebSocket broadcast
+                  and trace audit document generation
   providers/      data source abstraction (mock)
   report/         HTML report rendering
   storage/        SQLite (jobs / events)
@@ -110,8 +112,8 @@ data/
 
 ## Roadmap
 
-- [x] V1: pipeline, observability layer, console, caching, failure paths, consistency study
-- [ ] V2: full agent suite, charts, PDF export, real data sources, replay, section-level tracing
+- [x] V1: multi-role analysis pipeline, audit trace, caching, failure paths, consistency study
+- [ ] V2: analysis depth — valuation engine (DCF / comparable), financial ratios, sensitivity analysis, core charts, full 8-agent suite, news/sentiment, PDF, real data sources
 - [ ] V3: memory layer (Mem0), multi-job comparison, more markets
 
 ## Acknowledgements
