@@ -28,6 +28,7 @@ def render_html(
     failures: list[str],
     valuation: dict | None = None,
     charts: dict | None = None,
+    memory_context: list[dict] | None = None,
 ) -> str:
     p = processed
     market = p["market"]
@@ -36,10 +37,12 @@ def render_html(
     # 财务历史表
     rows = ""
     for i, year in enumerate(p["years"]):
+        def cell(v, spec: str = ",.0f") -> str:
+            return f"{v:{spec}}" if v is not None else "n/a"
         rows += (
-            f"<tr><td>{year}</td><td>{p['revenue'][i]:,.0f}</td>"
-            f"<td>{p['ebitda'][i]:,.0f}</td><td>{p['net_income'][i]:,.0f}</td>"
-            f"<td>{p['eps'][i]:.2f}</td></tr>"
+            f"<tr><td>{year}</td><td>{cell(p['revenue'][i])}</td>"
+            f"<td>{cell(p['ebitda'][i])}</td><td>{cell(p['net_income'][i])}</td>"
+            f"<td>{cell(p['eps'][i], '.2f')}</td></tr>"
         )
 
     def section(title: str, body: str, content: dict) -> str:
@@ -76,6 +79,15 @@ th {{ background: #f5f7fa; }}
     if failures:
         html += '<div class="warn">Warning: ' + escape("; ".join(failures)) + "</div>"
 
+    if memory_context:
+        mem_items = "".join(
+            f"<li>{escape(m.get('text', ''))}</li>" for m in memory_context[:3]
+        )
+        html += (
+            '<h2>Memory Context</h2>'
+            f'<ul class="memory">{mem_items}</ul>'
+        )
+
     ratio_rows = ""
     ratio_items = [
         ("Gross Margin", f"{ratios['gross_margin_pct']:.1f}%" if ratios.get("gross_margin_pct") is not None else "n/a"),
@@ -103,11 +115,11 @@ th {{ background: #f5f7fa; }}
 <table>
 <tr><th>Metric</th><th>Value</th></tr>
 {_metric_row("Current Price", market.get("price"))}
-{_metric_row("Market Cap ($B)", market.get("market_cap_bn"))}
-{_metric_row("Analyst Rating", market.get("analyst_rating"))}
-{_metric_row("Target Price", market.get("target_price"))}
-{_metric_row("P/E", market.get("pe_ratio"))}
-{_metric_row("EV/EBITDA", market.get("ev_ebitda"))}
+{_metric_row("Market Cap ($B)", market.get("market_cap_bn") if market.get("market_cap_bn") is not None else "n/a")}
+{_metric_row("Analyst Rating", market.get("analyst_rating") or "n/a")}
+{_metric_row("Target Price", market.get("target_price") if market.get("target_price") is not None else "n/a")}
+{_metric_row("P/E", market.get("pe_ratio") if market.get("pe_ratio") is not None else "n/a")}
+{_metric_row("EV/EBITDA", market.get("ev_ebitda") if market.get("ev_ebitda") is not None else "n/a")}
 {_metric_row("Revenue Growth (YoY, %)", f"{p['revenue_growth_pct']:.1f}" if p['revenue_growth_pct'] is not None else "n/a")}
 {_metric_row("Net Margin (%)", f"{p['net_margin_pct']:.1f}" if p['net_margin_pct'] is not None else "n/a")}
 {_metric_row("1Y Revenue Forecast", f"{p['forecast_revenue_1y']:,.0f}" if p['forecast_revenue_1y'] else "n/a")}

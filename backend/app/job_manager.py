@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from backend.config import project_root
+from backend.comparison.comparator import build_result_json
 from backend.flow.pipeline import build_report_flow
 from backend.observability.event_bus import EventBus
 from backend.observability.trace import build_trace
@@ -48,6 +49,7 @@ class JobManager:
                     "job_finished",
                     {"status": "succeeded", "report_path": report_path},
                 )
+                self._write_result(shared, params, job_id)
         except Exception as exc:
             self.db.update_job_status(job_id, "failed")
             self.bus.publish(job_id, "job_failed", {"error": str(exc)})
@@ -81,4 +83,16 @@ class JobManager:
             )
         except Exception:
             # trace 是副产品，生成失败不影响主流程
+            pass
+
+    def _write_result(self, shared: dict, params: dict, job_id: str) -> None:
+        """把结构化结果摘要落盘，供多任务对比使用。"""
+        try:
+            result = build_result_json(shared, {**params, "job_id": job_id})
+            out_dir = project_root() / "data" / "artifacts"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / f"job_{job_id}_result.json").write_text(
+                json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+        except Exception:
             pass

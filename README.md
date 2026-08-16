@@ -14,6 +14,8 @@ FinFlow is built on [PocketFlow](https://github.com/The-Pocket/PocketFlow), a 10
 - **Full-stack console** — FastAPI + WebSocket backend, React frontend with a live pipeline status view and report preview
 - **Reproducible** — mock data mode, LLM result caching, and CLI experiments with repeatable sampling
 - **Research-ready** — the pipeline doubles as an experiment platform for studying LLM output reliability (see [Research](#research))
+- **Cross-task memory** — analysis conclusions are stored via Mem0 (local embeddings) and retrieved in later runs for consistency
+- **Multi-market** — US stocks via yfinance, A-shares via akshare (e.g. `600519`), or offline mock data
 
 ## Research
 
@@ -69,6 +71,12 @@ Copy `.env.example` to `.env` and set `DEEPSEEK_API_KEY`.
 # Real market data via yfinance (network / proxy may be required)
 .venv\Scripts\python.exe -m backend.cli --ticker AAPL --mode real
 
+# A-share via akshare (e.g. Kweichow Moutai)
+.venv\Scripts\python.exe -m backend.cli --ticker 600519 --mode real
+
+# Compare previous runs of a ticker
+.venv\Scripts\python.exe -m backend.cli --compare AAPL
+
 # Repeat N times without cache (consistency experiments)
 .venv\Scripts\python.exe -m backend.cli --ticker AAPL --repeat 5 --no-cache
 ```
@@ -119,7 +127,7 @@ data/
 
 - [x] V1: multi-role analysis pipeline, audit trace, caching, failure paths, consistency study
 - [x] V2: analysis depth — valuation engine (DCF / comparable), financial ratios, sensitivity analysis, core charts, full 8-agent suite, news/sentiment, PDF export, yfinance real data source
-- [ ] V3: memory layer (Mem0), multi-job comparison, more markets
+- [x] V3: memory layer (Mem0), multi-run comparison, A-share data source (akshare)
 
 ## Acknowledgements
 

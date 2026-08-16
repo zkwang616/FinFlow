@@ -7,6 +7,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 from pathlib import Path
 
+from backend.comparison.comparator import compare
+
 router = APIRouter()
 
 
@@ -52,3 +54,8 @@ async def get_report_pdf(job_id: str, request: Request):
     if not pdf_path.exists():
         return JSONResponse({"error": "pdf not generated"}, status_code=404)
     return FileResponse(pdf_path, media_type="application/pdf")
+
+
+@router.get("/api/jobs/compare/{ticker}")
+async def compare_jobs(ticker: str):
+    return compare(ticker.upper())

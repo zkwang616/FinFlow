@@ -179,24 +179,36 @@ AGENTS: list[dict] = [
 ]
 
 
-def build_data_brief(processed: dict, valuation: dict | None = None) -> str:
-    """把处理后的指标与定量估值转成所有 agent 共享的数据简报。"""
+def build_data_brief(
+    processed: dict,
+    valuation: dict | None = None,
+    memory_context: list[dict] | None = None,
+) -> str:
+    """把处理后的指标、定量估值与历史记忆转成所有 agent 共享的数据简报。"""
+    def _fmt(value, spec: str = ".2f") -> str:
+        return f"{value:{spec}}" if value is not None else "n/a"
+
     market = processed["market"]
     lines = [
         f"Company: {processed['company_name']} ({processed['ticker']})",
         f"Data as of: {processed['as_of']}",
-        f"Latest fiscal year: {processed['latest_year']}",
+        f"Latest fiscal year: {_fmt(processed.get('latest_year'), 'd')}",
         (
-            f"Revenue: {processed['latest_revenue']:.0f} (growth {processed['revenue_growth_pct']:.1f}% YoY)"
+            f"Revenue: {_fmt(processed.get('latest_revenue'), '.0f')} "
+            f"(growth {_fmt(processed.get('revenue_growth_pct'), '.1f')}% YoY)"
             if processed["revenue_growth_pct"] is not None
-            else f"Revenue: {processed['latest_revenue']:.0f}"
+            else f"Revenue: {_fmt(processed.get('latest_revenue'), '.0f')}"
         ),
-        f"EBITDA: {processed['latest_ebitda']:.0f}",
-        f"Net income: {processed['latest_net_income']:.0f} (margin {processed['net_margin_pct']:.1f}%)",
-        f"EPS: {processed['latest_eps']:.2f}",
-        f"Current price: {market.get('price')} | Market cap: {market.get('market_cap_bn')}B",
-        f"Analyst rating: {market.get('analyst_rating')} | Target: {market.get('target_price')}",
-        f"P/E: {market.get('pe_ratio')} | EV/EBITDA: {market.get('ev_ebitda')}",
+        f"EBITDA: {_fmt(processed.get('latest_ebitda'), '.0f')}",
+        f"Net income: {_fmt(processed.get('latest_net_income'), '.0f')} "
+        f"(margin {_fmt(processed.get('net_margin_pct'), '.1f')}%)",
+        f"EPS: {_fmt(processed.get('latest_eps'), '.2f')}",
+        f"Current price: {_fmt(market.get('price'), '.2f')} | "
+        f"Market cap: {_fmt(market.get('market_cap_bn'), '.1f')}B",
+        f"Analyst rating: {market.get('analyst_rating') or 'n/a'} | "
+        f"Target: {_fmt(market.get('target_price'), '.2f')}",
+        f"P/E: {_fmt(market.get('pe_ratio'), '.1f')} | "
+        f"EV/EBITDA: {_fmt(market.get('ev_ebitda'), '.1f')}",
     ]
     if processed["forecast_revenue_1y"]:
         lines.append(f"1y revenue forecast: {processed['forecast_revenue_1y']:.0f}")
@@ -242,6 +254,13 @@ def build_data_brief(processed: dict, valuation: dict | None = None) -> str:
                     f"  DCF sensitivity (WACC 8-10% × terminal g 2-3%): "
                     f"${min(vals):.2f} - ${max(vals):.2f}"
                 )
+    if memory_context:
+        lines.append(
+            "Historical analysis memory (from previous runs, for reference). "
+            "If relevant, briefly note consistency or divergence with these prior conclusions:"
+        )
+        for m in memory_context[:3]:
+            lines.append(f"  - {m.get('text', '')[:400]}")
     return "\n".join(lines)
 
 

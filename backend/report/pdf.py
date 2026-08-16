@@ -102,13 +102,15 @@ def build_pdf(
     story.append(Paragraph("Financial History ($M)", styles["Heading2"]))
     hist = [["Year", "Revenue", "EBITDA", "Net Income", "EPS"]]
     for i, year in enumerate(processed["years"]):
+        def cell(v, spec: str = ",.0f") -> str:
+            return f"{v:{spec}}" if v is not None else "n/a"
         hist.append(
             [
                 str(year),
-                f"{processed['revenue'][i]:,.0f}",
-                f"{processed['ebitda'][i]:,.0f}",
-                f"{processed['net_income'][i]:,.0f}",
-                f"{processed['eps'][i]:.2f}",
+                cell(processed["revenue"][i]),
+                cell(processed["ebitda"][i]),
+                cell(processed["net_income"][i]),
+                cell(processed["eps"][i], ".2f"),
             ]
         )
     story.append(_table(hist, col_widths=[0.9 * inch, 1.2 * inch, 1.2 * inch, 1.2 * inch, 0.8 * inch]))

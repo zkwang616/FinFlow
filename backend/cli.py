@@ -11,6 +11,18 @@ from backend.flow.pipeline import run_job
 
 
 async def _main(args) -> int:
+    if args.compare:
+        from backend.comparison.comparator import compare
+
+        data = compare(args.compare.upper())
+        print(f"=== compare {args.compare.upper()} ({data['run_count']} runs) ===")
+        print(json.dumps(data["summary"], ensure_ascii=False, indent=2))
+        return 0
+
+    if not args.ticker:
+        print("error: --ticker is required (or use --compare)")
+        return 2
+
     job = {
         "ticker": args.ticker,
         "mode": args.mode,
@@ -44,11 +56,12 @@ async def _main(args) -> int:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="FinFlow report generation")
-    parser.add_argument("--ticker", required=True, help="stock ticker (e.g. AAPL)")
+    parser.add_argument("--ticker", default="", help="stock ticker (e.g. AAPL)")
     parser.add_argument("--mode", default="mock", choices=["mock", "real"])
     parser.add_argument("--repeat", type=int, default=1, help="run N times (consistency experiments)")
     parser.add_argument("--no-cache", action="store_true", help="bypass LLM cache")
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--compare", metavar="TICKER", help="compare previous runs of a ticker")
     args = parser.parse_args()
     raise SystemExit(asyncio.run(_main(args)))
 

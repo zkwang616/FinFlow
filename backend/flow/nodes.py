@@ -9,9 +9,11 @@ from pathlib import Path
 from pocketflow import AsyncParallelBatchNode
 
 from backend.config import project_root
+from backend.providers.akshare_provider import AkshareProvider, is_a_share
 from backend.flow.agents import AGENTS, build_data_brief, call_structured
 from backend.flow.processing import process_snapshot
 from backend.flow.valuation import valuation_engine
+from backend.memory.memory_service import search_memories, store_analysis_memory
 from backend.observability.observable import ObservableNode
 from backend.providers.mock import MockProvider
 from backend.providers.yfinance_provider import YFinanceProvider
@@ -50,6 +52,8 @@ class MockDataNode(ObservableNode):
     async def exec_async(self, params):
         ticker, mode = params
         if mode == "real":
+            if is_a_share(ticker):
+                return AkshareProvider().get_snapshot(ticker)
             return YFinanceProvider().get_snapshot(ticker)
         return MockProvider().get_snapshot(ticker)
 
@@ -76,7 +80,11 @@ class TextAgentBatchNode(ObservableNode, AsyncParallelBatchNode):
     """4 个分析 agent 并行执行；单个失败不影响整体，标记 fallback。"""
 
     async def prep_async(self, shared):
-        data_brief = build_data_brief(shared["processed"], shared.get("valuation"))
+        data_brief = build_data_brief(
+            shared["processed"],
+            shared.get("valuation"),
+            shared.get("memory_context"),
+        )
         return [
             {
                 "agent": agent,
@@ -122,6 +130,24 @@ class TextAgentBatchNode(ObservableNode, AsyncParallelBatchNode):
         return "default"
 
 
+class MemoryRetrieveNode(ObservableNode):
+    """检索与本次分析相关的历史记忆，注入 agent 简报。"""
+
+    async def prep_async(self, shared):
+        return shared["processed"]
+
+    async def exec_async(self, processed):
+        query = (
+            f"{processed.get('company_name', '')} ({processed.get('ticker', '')}) "
+            "investment analysis conclusion"
+        )
+        return search_memories(query, limit=3)
+
+    async def post_async(self, shared, prep_res, exec_res):
+        shared["memory_context"] = exec_res
+        return "default"
+
+
 class ValuationNode(ObservableNode):
     """定量估值：DCF + 可比公司 + 敏感性（纯计算）。"""
 
@@ -136,6 +162,28 @@ class ValuationNode(ObservableNode):
         return "default"
 
 
+class MemoryStoreNode(ObservableNode):
+    """任务完成后把本次分析结论写入记忆。"""
+
+    async def prep_async(self, shared):
+        return (
+            shared["processed"],
+            shared["text_sections"],
+            shared.get("valuation"),
+        )
+
+    async def exec_async(self, payload):
+        processed, sections, valuation = payload
+        try:
+            return store_analysis_memory(processed, sections, valuation)
+        except Exception as exc:
+            return {"stored": False, "error": str(exc)}
+
+    async def post_async(self, shared, prep_res, exec_res):
+        shared["memory"] = exec_res
+        return "default"
+
+
 class HtmlReportNode(ObservableNode):
     """渲染 HTML 报告并落盘。"""
 
@@ -146,6 +194,7 @@ class HtmlReportNode(ObservableNode):
             "failures": shared.get("agent_failures", []),
             "valuation": shared.get("valuation"),
             "snapshot": shared["snapshot"],
+            "memory_context": shared.get("memory_context", []),
         }
 
     async def exec_async(self, payload):
@@ -156,6 +205,7 @@ class HtmlReportNode(ObservableNode):
             payload["failures"],
             payload["valuation"],
             charts,
+            payload["memory_context"],
         )
         artifacts = project_root() / "data" / "artifacts"
         artifacts.mkdir(parents=True, exist_ok=True)
