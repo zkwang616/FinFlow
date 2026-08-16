@@ -183,6 +183,7 @@ def build_data_brief(
     processed: dict,
     valuation: dict | None = None,
     memory_context: list[dict] | None = None,
+    recommendation: dict | None = None,
 ) -> str:
     """把处理后的指标、定量估值与历史记忆转成所有 agent 共享的数据简报。"""
     def _fmt(value, spec: str = ".2f") -> str:
@@ -261,6 +262,14 @@ def build_data_brief(
         )
         for m in memory_context[:3]:
             lines.append(f"  - {m.get('text', '')[:400]}")
+    if recommendation:
+        lines.append(
+            "Quantitative recommendation (rule-based, from valuation vs price): "
+            f"{recommendation.get('recommendation', 'hold')} at "
+            f"{recommendation.get('position_pct', 0)}% position "
+            f"(confidence {recommendation.get('confidence', 0):.1f}). "
+            f"{recommendation.get('rationale', '')}"
+        )
     return "\n".join(lines)
 
 

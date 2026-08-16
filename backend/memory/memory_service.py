@@ -52,7 +52,12 @@ def get_memory():
     return _memory
 
 
-def build_memory_text(processed: dict, sections: dict, valuation: dict | None) -> str:
+def build_memory_text(
+    processed: dict,
+    sections: dict,
+    valuation: dict | None,
+    recommendation: dict | None = None,
+) -> str:
     """把一次分析的关键结论压缩成一条记忆文本。"""
     lines = [
         f"Investment analysis of {processed.get('company_name', '')} "
@@ -72,16 +77,24 @@ def build_memory_text(processed: dict, sections: dict, valuation: dict | None) -
     risks = (sections.get("risks") or {}).get("risks") or []
     if risks:
         lines.append("Key risks: " + "; ".join(str(r) for r in risks[:3]))
+    if recommendation:
+        lines.append(
+            f"Recommendation: {recommendation.get('recommendation', 'hold')} at "
+            f"{recommendation.get('position_pct', 0)}% position"
+        )
     return " ".join(lines)
 
 
 def store_analysis_memory(
-    processed: dict, sections: dict, valuation: dict | None
+    processed: dict,
+    sections: dict,
+    valuation: dict | None,
+    recommendation: dict | None = None,
 ) -> dict:
     """把本次分析结论写入 Mem0。"""
     if not memory_enabled():
         return {"stored": False, "reason": "memory disabled"}
-    text = build_memory_text(processed, sections, valuation)
+    text = build_memory_text(processed, sections, valuation, recommendation)
     metadata = {
         "ticker": processed.get("ticker", ""),
         "company_name": processed.get("company_name", ""),

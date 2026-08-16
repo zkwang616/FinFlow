@@ -38,6 +38,7 @@ def build_pdf(
     processed: dict,
     sections: dict,
     valuation: dict | None,
+    recommendation: dict | None,
     output_path: Path | str,
 ) -> str:
     """生成 PDF 分析报告，返回输出路径。"""
@@ -95,6 +96,8 @@ def build_pdf(
         ("Target Price", market.get("target_price", "n/a")),
         ("P/E", market.get("pe_ratio", "n/a")),
         ("EV/EBITDA", market.get("ev_ebitda", "n/a")),
+        ("Recommendation", (recommendation or {}).get("recommendation", "n/a")),
+        ("Suggested Position", f"{(recommendation or {}).get('position_pct', 0)}%"),
     ]
     story.append(_table(metric_rows(key_pairs), col_widths=[2.6 * inch, 1.6 * inch]))
     story.append(Spacer(1, 10))

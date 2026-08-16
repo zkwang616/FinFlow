@@ -14,6 +14,7 @@ from backend.flow.nodes import (
     MemoryStoreNode,
     MockDataNode,
     PdfReportNode,
+    RecommendationNode,
     TextAgentBatchNode,
     ValuationNode,
 )
@@ -26,6 +27,7 @@ def build_report_flow(job_id: str, event_bus=None) -> ObservableFlow:
     data_node = MockDataNode(job_id=job_id, event_bus=event_bus)
     process_node = DataProcessorNode(job_id=job_id, event_bus=event_bus)
     valuation_node = ValuationNode(job_id=job_id, event_bus=event_bus)
+    recommendation_node = RecommendationNode(job_id=job_id, event_bus=event_bus)
     memory_retrieve_node = MemoryRetrieveNode(job_id=job_id, event_bus=event_bus)
     agents_node = TextAgentBatchNode(job_id=job_id, event_bus=event_bus)
     report_node = HtmlReportNode(job_id=job_id, event_bus=event_bus)
@@ -36,7 +38,8 @@ def build_report_flow(job_id: str, event_bus=None) -> ObservableFlow:
     input_node >> data_node
     data_node >> process_node
     process_node >> valuation_node
-    valuation_node >> memory_retrieve_node
+    valuation_node >> recommendation_node
+    recommendation_node >> memory_retrieve_node
     memory_retrieve_node >> agents_node
     agents_node >> report_node
     report_node >> pdf_node

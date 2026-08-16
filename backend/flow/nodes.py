@@ -12,6 +12,7 @@ from backend.config import project_root
 from backend.providers.akshare_provider import AkshareProvider, is_a_share
 from backend.flow.agents import AGENTS, build_data_brief, call_structured
 from backend.flow.processing import process_snapshot
+from backend.flow.recommendation import compute_recommendation
 from backend.flow.valuation import valuation_engine
 from backend.memory.memory_service import search_memories, store_analysis_memory
 from backend.observability.observable import ObservableNode
@@ -84,6 +85,7 @@ class TextAgentBatchNode(ObservableNode, AsyncParallelBatchNode):
             shared["processed"],
             shared.get("valuation"),
             shared.get("memory_context"),
+            shared.get("recommendation"),
         )
         return [
             {
@@ -162,6 +164,21 @@ class ValuationNode(ObservableNode):
         return "default"
 
 
+class RecommendationNode(ObservableNode):
+    """基于定量估值推导投资建议与建议仓位（规则引擎）。"""
+
+    async def prep_async(self, shared):
+        return shared["processed"], shared.get("valuation")
+
+    async def exec_async(self, payload):
+        processed, valuation = payload
+        return compute_recommendation(processed, valuation)
+
+    async def post_async(self, shared, prep_res, exec_res):
+        shared["recommendation"] = exec_res
+        return "default"
+
+
 class MemoryStoreNode(ObservableNode):
     """任务完成后把本次分析结论写入记忆。"""
 
@@ -170,12 +187,13 @@ class MemoryStoreNode(ObservableNode):
             shared["processed"],
             shared["text_sections"],
             shared.get("valuation"),
+            shared.get("recommendation"),
         )
 
     async def exec_async(self, payload):
-        processed, sections, valuation = payload
+        processed, sections, valuation, recommendation = payload
         try:
-            return store_analysis_memory(processed, sections, valuation)
+            return store_analysis_memory(processed, sections, valuation, recommendation)
         except Exception as exc:
             return {"stored": False, "error": str(exc)}
 
@@ -195,6 +213,7 @@ class HtmlReportNode(ObservableNode):
             "valuation": shared.get("valuation"),
             "snapshot": shared["snapshot"],
             "memory_context": shared.get("memory_context", []),
+            "recommendation": shared.get("recommendation"),
         }
 
     async def exec_async(self, payload):
@@ -206,6 +225,7 @@ class HtmlReportNode(ObservableNode):
             payload["valuation"],
             charts,
             payload["memory_context"],
+            payload["recommendation"],
         )
         artifacts = project_root() / "data" / "artifacts"
         artifacts.mkdir(parents=True, exist_ok=True)
@@ -228,6 +248,7 @@ class PdfReportNode(ObservableNode):
             "processed": shared["processed"],
             "sections": shared["text_sections"],
             "valuation": shared.get("valuation"),
+            "recommendation": shared.get("recommendation"),
             "html_path": shared["report"]["path"],
         }
 
@@ -237,6 +258,7 @@ class PdfReportNode(ObservableNode):
             payload["processed"],
             payload["sections"],
             payload["valuation"],
+            payload.get("recommendation"),
             pdf_path,
         )
         return {"pdf_path": str(pdf_path)}

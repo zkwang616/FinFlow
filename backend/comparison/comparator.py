@@ -63,6 +63,7 @@ def build_result_json(shared: dict, params: dict) -> dict:
             "label": news.get("sentiment"),
             "score": news.get("sentiment_score"),
         },
+        "recommendation": shared.get("recommendation") or {},
         "risk_rating": risks.get("risk_rating"),
         "key_metrics": {
             "price": market.get("price"),

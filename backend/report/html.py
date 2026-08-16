@@ -29,6 +29,7 @@ def render_html(
     valuation: dict | None = None,
     charts: dict | None = None,
     memory_context: list[dict] | None = None,
+    recommendation: dict | None = None,
 ) -> str:
     p = processed
     market = p["market"]
@@ -120,6 +121,8 @@ th {{ background: #f5f7fa; }}
 {_metric_row("Target Price", market.get("target_price") if market.get("target_price") is not None else "n/a")}
 {_metric_row("P/E", market.get("pe_ratio") if market.get("pe_ratio") is not None else "n/a")}
 {_metric_row("EV/EBITDA", market.get("ev_ebitda") if market.get("ev_ebitda") is not None else "n/a")}
+{_metric_row("Recommendation", recommendation.get("recommendation", "n/a").upper() if recommendation else "n/a")}
+{_metric_row("Suggested Position", f"{recommendation.get('position_pct', 0)}%" if recommendation else "n/a")}
 {_metric_row("Revenue Growth (YoY, %)", f"{p['revenue_growth_pct']:.1f}" if p['revenue_growth_pct'] is not None else "n/a")}
 {_metric_row("Net Margin (%)", f"{p['net_margin_pct']:.1f}" if p['net_margin_pct'] is not None else "n/a")}
 {_metric_row("1Y Revenue Forecast", f"{p['forecast_revenue_1y']:,.0f}" if p['forecast_revenue_1y'] else "n/a")}

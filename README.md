@@ -8,6 +8,7 @@ FinFlow is built on [PocketFlow](https://github.com/The-Pocket/PocketFlow), a 10
 
 - **Multi-role stock analysis** — 8 parallel analysis agents (overview, financial health, valuation, competitors, news/sentiment, catalysts, risks, takeaways) produce a structured report from one ticker
 - **Quantitative engine** — financial ratios, DCF & comparable valuation, and sensitivity analysis are computed from data (not LLM-generated), then fed to the analysis agents as ground truth
+- **Rule-based recommendation** — a deterministic BUY / HOLD / REDUCE signal with a suggested position (%) derived from the fair-value range vs. the current price
 - **Charts & PDF** — trend / peer / price charts embedded in the report, plus a PDF export
 - **Lightweight core** — built on PocketFlow (a ~100-line LLM framework), with minimal dependencies (`fastapi`, `openai`, `pandas`)
 - **Auditable execution** — every run produces a `trace.json` alongside the report, recording each step's inputs, outputs, timing, actions, and errors
@@ -31,6 +32,10 @@ Key findings from 10 repeated runs with identical input (DeepSeek, `temperature=
 - With `temperature=0` (greedy decoding), conclusion direction remains **50/50** — the instability is not sampling noise but the model itself
 
 Raw experiment data and scripts: `backend/experiments/` and `data/experiments/`.
+
+In V2/V3, direction-type outputs were replaced by deterministic rules (quantitative
+valuation vs. price) and cross-run memory anchors, making the recommendation output
+fully reproducible.
 
 ## Getting Started
 
@@ -89,7 +94,8 @@ React console (live DAG visualization)
 FastAPI (JobManager + EventBus)
         │
 PocketFlow AsyncFlow (ObservableNode wrapping)
-  Input → MockData → DataProcessor → TextAgents (×4 parallel) → HtmlReport → Done
+  Input → Data → DataProcessor → Valuation → Recommendation → MemoryRetrieve
+        → TextAgents (×8 parallel) → HtmlReport → PdfReport → MemoryStore → Done
 ```
 
 ## Project Structure
@@ -100,9 +106,11 @@ backend/
   flow/           nodes, agents, pipeline assembly (PocketFlow)
   observability/  event bus, observable nodes, WebSocket broadcast
                   and trace audit document generation
-  providers/      data source abstraction (mock)
+  providers/      data source abstraction (mock / yfinance / akshare)
   report/         HTML/PDF report rendering, charts
   storage/        SQLite (jobs / events)
+  memory/         Mem0 cross-task memory service
+  comparison/     multi-run comparison
   experiments/    research experiments (consistency study)
   tests/          end-to-end tests
 frontend/         React + Vite + React Flow console
@@ -122,6 +130,8 @@ data/
 | GET | `/api/jobs/{id}/events` | Full event history (replay / audit) |
 | WS | `/ws/jobs/{id}` | Real-time event stream |
 | GET | `/api/jobs/{id}/report` | Generated HTML report |
+| GET | `/api/jobs/{id}/report.pdf` | Generated PDF report |
+| GET | `/api/jobs/compare/{ticker}` | Compare all previous runs of a ticker |
 
 ## Roadmap
 
